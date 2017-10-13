@@ -1,0 +1,7 @@
+.idea
+build/
+node_modules/
+coverageEnv/
+scTopics
+coverage.json
+coverage/
