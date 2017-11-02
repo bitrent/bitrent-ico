@@ -1,32 +1,31 @@
 pragma solidity ^0.4.15;
 
-
-import "../library/ownership/Ownable.sol";
 import "../library/ownership/HasNoEther.sol";
+import "../library/lifecycle/Pausable.sol";
 import "../library/math/SafeMath.sol";
-import "./RntToken.sol";
+import "../library/interface/IRntToken.sol";
 
 
-contract RntTokenVault is Ownable, HasNoEther, Pausable {
+contract RntTokenVault is HasNoEther, Pausable {
     using SafeMath for uint256;
 
-    RntToken rntToken;
+    IRntToken public rntToken;
 
     uint256 public accountsCount = 0;
 
     uint256 public tokens = 0;
 
-    mapping (string => bool)  accountsStatuses;
+    mapping (bytes16 => bool) public accountsStatuses;
 
-    mapping (string => uint256) balances;
+    mapping (bytes16 => uint256) public balances;
 
-    mapping (address => bool) allowedAddresses;
+    mapping (address => bool) public allowedAddresses;
 
-    mapping (address => string) tokenTransfers;
+    mapping (address => bytes16) public tokenTransfers;
 
 
     function RntTokenVault(address _rntTokenAddress){
-        rntToken = RntToken(_rntTokenAddress);
+        rntToken = IRntToken(_rntTokenAddress);
     }
 
 
@@ -35,7 +34,7 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         _;
     }
 
-    modifier onlyRegisteredAccount(string _uuid) {
+    modifier onlyRegisteredAccount(bytes16 _uuid) {
         require(accountsStatuses[_uuid] == true);
         _;
     }
@@ -44,7 +43,7 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         return rntToken.balanceOf(this);
     }
 
-    function getTokenTransferUuid(address _address) onlyAllowedAddresses public constant returns (string) {
+    function getTokenTransferUuid(address _address) onlyAllowedAddresses public constant returns (bytes16) {
         return tokenTransfers[_address];
     }
 
@@ -56,13 +55,10 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         return allowedAddresses[_address];
     }
 
-    function balanceOf(string _uuid) onlyAllowedAddresses public constant returns (uint256) {
-        return balances[_uuid];
-    }
     /**
      * Register account for accounts counting
      */
-    function registerAccount(string _uuid) public {
+    function registerAccount(bytes16 _uuid) public {
         accountsStatuses[_uuid] = true;
         accountsCount = accountsCount.add(1);
     }
@@ -74,20 +70,20 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         allowedAddresses[_address] = _allow;
     }
 
-    function addTokensToAccount(string _uuid, uint256 _tokensCount) onlyAllowedAddresses whenNotPaused public returns (bool) {
+    function addTokensToAccount(bytes16 _uuid, uint256 _tokensCount) onlyAllowedAddresses whenNotPaused public returns (bool) {
         registerAccount(_uuid);
         balances[_uuid] = balances[_uuid].add(_tokensCount);
         tokens = tokens.add(_tokensCount);
         return true;
     }
 
-    function removeTokensFromAccount(string _uuid, uint256 _tokensCount) onlyAllowedAddresses
+    function removeTokensFromAccount(bytes16 _uuid, uint256 _tokensCount) onlyAllowedAddresses
             onlyRegisteredAccount(_uuid) whenNotPaused internal returns (bool) {
         balances[_uuid] = balances[_uuid].sub(_tokensCount);
         return true;
     }
 
-    function transferTokensToAccount(string _from, string _to, uint256 _tokensCount) onlyAllowedAddresses
+    function transferTokensToAccount(bytes16 _from, bytes16 _to, uint256 _tokensCount) onlyAllowedAddresses
             onlyRegisteredAccount(_from) whenNotPaused public returns (bool) {
         registerAccount(_to);
         balances[_from] = balances[_from].sub(_tokensCount);
@@ -95,7 +91,7 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         return true;
     }
 
-    function moveAllTokensToAddress(string _uuid, address _address) onlyAllowedAddresses
+    function moveAllTokensToAddress(bytes16 _uuid, address _address) onlyAllowedAddresses
             onlyRegisteredAccount(_uuid) whenNotPaused public returns (bool) {
         uint256 accountBalance = balances[_uuid];
         removeTokensFromAccount(_uuid, accountBalance);
@@ -105,7 +101,7 @@ contract RntTokenVault is Ownable, HasNoEther, Pausable {
         return true;
     }
 
-    function moveTokensToAddress(string _uuid, address _address, uint256 _tokensCount) onlyAllowedAddresses
+    function moveTokensToAddress(bytes16 _uuid, address _address, uint256 _tokensCount) onlyAllowedAddresses
             onlyRegisteredAccount(_uuid) whenNotPaused public returns (bool) {
         removeTokensFromAccount(_uuid, _tokensCount);
         rntToken.transfer(_address, _tokensCount);

@@ -40,3 +40,8 @@ solidity-coverage 0.2.5
 Solium linter 1.0.0 BETA  
 solcheck linter 0.1.3  
 oyente analysis tool v0.2.6  
+
+#### Deployment price
+Gas usage: 10455403
+Price in wei: 2.19563463e+17
+Price in ether: 0.219563463

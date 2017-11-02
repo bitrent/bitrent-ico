@@ -9,7 +9,7 @@ contract TestRntTokenVault is RntTokenVault {
 
     }
 
-    function testRemoveTokensFromAccount(string _uuid, uint256 _tokensCount) returns (bool) {
+    function testRemoveTokensFromAccount(bytes16 _uuid, uint256 _tokensCount) returns (bool) {
         super.removeTokensFromAccount(_uuid, _tokensCount);
         return true;
     }

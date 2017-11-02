@@ -1,11 +1,3 @@
-let provider;
-const HDWalletProvider = require('truffle-hdwallet-provider');
-const mnemonic = '[REDACTED]';
-
-if (!process.env.SOLIDITY_COVERAGE) {
-    provider = new HDWalletProvider(mnemonic, 'https://ropsten.infura.io/')
-}
-
 module.exports = {
     networks: {
         development: {
@@ -20,9 +12,11 @@ module.exports = {
             gas: 0xfffffffffff,
             gasPrice: 0x01
         },
-        ropsten: {
-            provider: provider,
-            network_id: 3 // official id of the ropsten public test network
-        },
+        demo: {
+            host: "192.168.0.77",
+            network_id: 211211,
+            port: 8545,
+            from: "9e65c373a97793e8d36cb8316ecbe79940110f90",
+        }
     }
 };

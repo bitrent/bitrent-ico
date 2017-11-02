@@ -1,15 +1,12 @@
 pragma solidity ^0.4.15;
 
-import '../library/token/StandardToken.sol';
-import '../library/ownership/Ownable.sol';
-import '../library/ownership/HasNoEther.sol';
-import '../library/lifecycle/Pausable.sol';
+import "../library/math/SafeMath.sol";
+import "../library/interface/IRntToken.sol";
 
-contract RntToken is StandardToken, Ownable, Pausable, HasNoEther {
-    string public name = "RNT Token";
-    string public code = "RNT";
-    uint8 public decimals = 2;
-    uint256 public totalSupply = 1000000000;
+contract RntToken is IRntToken {
+    using SafeMath for uint256;
+
+    address public owner;
 
     /* The finalizer contract that allows unlift the transfer limits on this token */
     address public releaseAgent;
@@ -21,8 +18,45 @@ contract RntToken is StandardToken, Ownable, Pausable, HasNoEther {
     These are crowdsale contracts and possible the team multisig itself. */
     mapping (address => bool) public transferAgents;
 
-    function RntToken() {
+    mapping (address => mapping (address => uint256)) public allowed;
+
+    mapping (address => uint256) public balances;
+
+    bool public paused = false;
+
+    event Pause();
+
+    event Unpause();
+
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    event Transfer(address indexed _from, address indexed _to, uint _value);
+
+    function RntToken() payable {
+        require(msg.value == 0);
+        owner = msg.sender;
         balances[msg.sender] = totalSupply;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused);
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused);
+        _;
     }
 
     /**
@@ -74,16 +108,97 @@ contract RntToken is StandardToken, Ownable, Pausable, HasNoEther {
     }
 
     function transfer(address _to, uint _value) public canTransfer(msg.sender) whenNotPaused returns (bool success) {
-        // Call StandardToken.transfer()
-        return super.transfer(_to, _value);
+        require(_to != address(0));
+
+        // SafeMath.sub will throw if there is not enough balance.
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        Transfer(msg.sender, _to, _value);
+        return true;
     }
 
     function transferFrom(address _from, address _to, uint _value) public canTransfer(_from) whenNotPaused returns (bool success) {
-        // Call StandardToken.transferForm()
-        return super.transferFrom(_from, _to, _value);
+        require(_to != address(0));
+
+        uint256 _allowance = allowed[_from][msg.sender];
+
+        // Check is not needed because sub(_allowance, _value) will already throw if this condition is not met
+        // require (_value <= _allowance);
+
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(_value);
+        allowed[_from][msg.sender] = _allowance.sub(_value);
+        Transfer(_from, _to, _value);
+        return true;
     }
 
-    function balanceOf(address _owner) public constant returns (uint256) {
-        return super.balanceOf(_owner);
+    /**
+     * @dev Approve the passed address to spend the specified amount of tokens on behalf of msg.sender.
+     *
+     * Beware that changing an allowance with this method brings the risk that someone may use both the old
+     * and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+     * race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+     * https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+     * @param _spender The address which will spend the funds.
+     * @param _value The amount of tokens to be spent.
+     */
+    function approve(address _spender, uint256 _value) public returns (bool) {
+        allowed[msg.sender][_spender] = _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
+    }
+
+    /**
+     * @dev Function to check the amount of tokens that an owner allowed to a spender.
+     * @param _owner address The address which owns the funds.
+     * @param _spender address The address which will spend the funds.
+     * @return A uint256 specifying the amount of tokens still available for the spender.
+     */
+    function allowance(address _owner, address _spender) public constant returns (uint256 remaining) {
+        return allowed[_owner][_spender];
+    }
+
+    /**
+    * @dev Gets the balance of the specified address.
+    * @param _owner The address to query the the balance of.
+    * @return An uint256 representing the amount owned by the passed address.
+    */
+    function balanceOf(address _owner) public constant returns (uint256 balance) {
+        return balances[_owner];
+    }
+
+
+    /*PAUSABLE FUNCTIONALITY*/
+
+
+    /**
+     * @dev called by the owner to pause, triggers stopped state
+     */
+    function pause() onlyOwner whenNotPaused public {
+        paused = true;
+        Pause();
+    }
+
+    /**
+     * @dev called by the owner to unpause, returns to normal state
+     */
+    function unpause() onlyOwner whenPaused public {
+        paused = false;
+        Unpause();
+    }
+
+    /*HAS NO ETHER FUNCTIONALITY*/
+    /**
+  * @dev Constructor that rejects incoming Ether
+  * @dev The `payable` flag is added so we can access `msg.value` without compiler warning. If we
+  * leave out payable, then Solidity will allow inheriting contracts to implement a payable
+  * constructor. By doing it this way we prevent a payable constructor from working. Alternatively
+  * we could use assembly to access msg.value.
+  */
+
+    /**
+     * @dev Disallows direct send by settings a default function without the `payable` flag.
+     */
+    function() external {
     }
 }

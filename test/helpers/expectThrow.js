@@ -16,5 +16,5 @@ module.exports = async promise => {
         );
         return;
     }
-    assert.fail('Expected throw not received');
+    assert(false, 'Expected throw not received');
 };

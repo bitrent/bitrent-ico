@@ -1,0 +1,7 @@
+{
+  "extends": "solium:all",
+  "rules": {
+    "indentation": ["warning", 4],
+    "quotes": ["error", "double"]
+  }
+}

@@ -1,4 +1,4 @@
-const RNTMultiSigWallet = artifacts.require('./RNTMultiSigWallet.sol');
+const RNTMultiSigWallet = artifacts.require('RNTMultiSigWallet');
 const web3 = RNTMultiSigWallet.web3;
 const deployMultisig = (owners, confirmations) => {
     return RNTMultiSigWallet.new(owners, confirmations)
@@ -19,7 +19,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_1 - Create transaction for transfer of 100 ether', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             const adminTransactionId = getParamFromTxEvent(
                 await multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[0]}),
@@ -47,7 +47,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_2 - Get exception when non-owner trying to create transaction', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             expectThrow(
                 multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[3]})
@@ -60,7 +60,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_3 - Confirm transaction by owner', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             const adminTransactionId = getParamFromTxEvent(
                 await multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[0]}),
@@ -84,7 +84,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_4 - Get an exception when trying to confirm an transaction by non-owner/non-admin', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             const adminTransactionId = getParamFromTxEvent(
                 await multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[0]}),
@@ -103,7 +103,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_5 - Revoke confirmation', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             const adminTransactionId = getParamFromTxEvent(
                 await multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[0]}),
@@ -127,7 +127,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_6 - Get exception when trying to revoke a confirmed transaction from non-owner (non-admin)', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
 
             const adminTransactionId = getParamFromTxEvent(
                 await multisigInstance.submitTransaction(accounts[4], etherToTransfer, "", {from: accounts[0]}),
@@ -147,8 +147,8 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_7 - Send 101 ether from wallet to the 3rd party address', async () => {
         try {
-            const initialWalletBalance = 200;
-            const etherToTransfer = 101;
+            const initialWalletBalance = web3.toBigNumber("200");
+            const etherToTransfer = web3.toBigNumber("101");
 
             await web3.eth.sendTransaction({
                 to: multisigInstance.address,
@@ -157,8 +157,8 @@ contract('RNTMultiSigWallet', (accounts) => {
             });
 
             assert.equal(
-                await web3.eth.getBalance(multisigInstance.address),
-                initialWalletBalance
+                await web3.eth.getBalance(multisigInstance.address).valueOf(),
+                initialWalletBalance.toString()
             );
 
             const receiverAccount = accounts[2];
@@ -202,8 +202,8 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_8 - Get an exception when trying to send 101 ether from wallet to the 3rd party address with only 1 confirmation', async () => {
         try {
-            const initialWalletBalance = 200;
-            const etherToTransfer = 101;
+            const initialWalletBalance = web3.toBigNumber("200");
+            const etherToTransfer = web3.toBigNumber("101");
 
             await web3.eth.sendTransaction({
                 to: multisigInstance.address,
@@ -212,8 +212,8 @@ contract('RNTMultiSigWallet', (accounts) => {
             });
 
             assert.equal(
-                await web3.eth.getBalance(multisigInstance.address),
-                initialWalletBalance
+                await web3.eth.getBalance(multisigInstance.address).valueOf(),
+                initialWalletBalance.toString()
             );
 
             const receiverAccount = accounts[2];
@@ -343,7 +343,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_14 - Set pause for contract by admin', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
             const adminAccount = accounts[0];
             await multisigInstance.pause({from: adminAccount});
             assert.isTrue(await multisigInstance.paused.call());
@@ -358,7 +358,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_15 - Send 100 ether to wallet', async () => {
         try {
-            const initialWalletBalance = 100;
+            const initialWalletBalance = web3.toBigNumber("100");
 
             await web3.eth.sendTransaction({
                 to: multisigInstance.address,
@@ -367,8 +367,8 @@ contract('RNTMultiSigWallet', (accounts) => {
             });
 
             assert.equal(
-                await web3.eth.getBalance(multisigInstance.address),
-                initialWalletBalance
+                await web3.eth.getBalance(multisigInstance.address).valueOf(),
+                initialWalletBalance.toString()
             );
         } catch (e) {
             assert(false, e.message);
@@ -377,7 +377,7 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     it('RNT_WALLET_16 - Unpause a contract by admin', async () => {
         try {
-            const etherToTransfer = 100;
+            const etherToTransfer = web3.toBigNumber("100");
             const adminAccount = accounts[0];
             await multisigInstance.pause({from: adminAccount});
             assert.isTrue(await multisigInstance.paused.call());
@@ -423,8 +423,8 @@ contract('RNTMultiSigWallet', (accounts) => {
 
     //default gnosis test fallback
     it('test execution after requirements changed', async () => {
-        const etherToTransfer = 100;
-        const deposit = 1000;
+        const etherToTransfer = web3.toBigNumber("100");
+        const deposit = web3.toBigNumber("1000");
 
         // Send money to wallet contract
         await new Promise((resolve, reject) => web3.eth.sendTransaction({

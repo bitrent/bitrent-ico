@@ -1,10 +1,11 @@
-const RntToken = artifacts.require("RntToken.sol");
-const RntTokenVault = artifacts.require("TestRntTokenVault.sol");
+const RntToken = artifacts.require("RntToken");
+const RntTokenVault = artifacts.require("TestRntTokenVault");
 
-const INITIAL_SUPPLY = 1000000000;
+
+const INITIAL_SUPPLY = web3.toBigNumber("1000000000000000000000000000");
 
 const deployToken = () => {
-    return RntToken.new("RNT", 2, INITIAL_SUPPLY, false);
+    return RntToken.new();
 };
 
 const deployVault = (tokenAddress) => {
@@ -14,10 +15,14 @@ const deployVault = (tokenAddress) => {
 const getParamFromTxEvent = require('./helpers/getParamFromTxEvent');
 const expectThrow = require('./helpers/expectThrow');
 const ether = require('./helpers/ether');
+const uuidParser = require('./helpers/uuidParser');
 
 contract('RntTokenVault', function (accounts) {
 
     const owner = accounts[0];
+
+    const uuid1 = uuidParser.parse("581275c6-35c0-4704-aa25-4dec99d6da04");
+    const uuid2 = uuidParser.parse("76061c06-8e01-41ac-bac1-547a41d9c1f3");
 
     it("RNT_TOKEN_VAULT_1 - Check creating account and adding tokens to it", async function () {
         try {
@@ -25,10 +30,12 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 100, { from: owner });
-            let value = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
-            assert.equal(value.c[0], 100);
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
+            const ob = await rnt.balanceOf.call(vault.address);
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
+            const value = await vault.balances.call(uuid1, { from: owner });
+       
+            assert.equal(value.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
             assert(false, err.message);
         }
@@ -40,10 +47,10 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 100, { from: owner });
-            await vault.testRemoveTokensFromAccount("1337-er2w-df24-aaa1", 100, { from: owner });
-            let value = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
+            await vault.testRemoveTokensFromAccount(uuid1, web3.toBigNumber("100"), { from: owner });
+            let value = await vault.balances.call(uuid1, { from: owner });
             assert.equal(value.c[0], 0);
         } catch (err) {
             assert(false);
@@ -60,7 +67,7 @@ contract('RntTokenVault', function (accounts) {
             await rnt.releaseTokenTransfer({ from: owner });
 
             expectThrow(
-                vault.testRemoveTokensFromAccount("1337-er2w-df24-aaa1", 100, { from: owner })
+                vault.testRemoveTokensFromAccount(uuid1, web3.toBigNumber("100"), { from: owner })
             );
         } catch (err) {
             assert(false, err.message);
@@ -75,7 +82,7 @@ contract('RntTokenVault', function (accounts) {
             await rnt.releaseTokenTransfer({ from: owner });
 
             expectThrow(
-                vault.addTokensToAccount("1337-er2w-df24-aaa1", 100, { from: accounts[4] })
+                vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: accounts[4] })
             );
         } catch (err) {
             assert(false, err.message);
@@ -88,11 +95,11 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
             expectThrow(
-                vault.testRemoveTokensFromAccount("1337-er2w-df24-aaa1", 100, { from: accounts[4] })
+                vault.testRemoveTokensFromAccount(uuid1, web3.toBigNumber("100"), { from: accounts[4] })
             );
         } catch (err) {
             assert(false, err.message);
@@ -106,13 +113,13 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
-            await vault.transferTokensToAccount("1337-er2w-df24-aaa1", "1337-er2w-df24-aaa2", 100, { from: owner });
-            let senderBalance = await vault.balanceOf.call("1337-er2w-df24-aaa2", { from: owner });
-            let recepientBalance = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
-            assert.equal(recepientBalance.c[0], 100);
-            assert.equal(senderBalance.c[0], 100);
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
+            await vault.transferTokensToAccount(uuid1, uuid2, web3.toBigNumber("100"), { from: owner });
+            let senderBalance = await vault.balances.call(uuid2, { from: owner });
+            let recepientBalance = await vault.balances.call(uuid1, { from: owner });
+            assert.equal(recepientBalance.valueOf(), web3.toBigNumber("100").toString());
+            assert.equal(senderBalance.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
             assert(false, err.message);
         }
@@ -124,10 +131,10 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await rnt.approve(vault.address, 10000, { from: owner });
+            await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
 
             expectThrow(
-                vault.transferTokensToAccount("1337-er2w-df24-aaa1", "1337-er2w-df24-aaa2", 100, { from: owner })
+                vault.transferTokensToAccount(uuid1, uuid2, web3.toBigNumber("100"), { from: owner })
             );
         } catch (err) {
             assert(false, err.message);
@@ -140,11 +147,11 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
             expectThrow(
-                vault.transferTokensToAccount("1337-er2w-df24-aaa1", "1337-er2w-df24-aaa2", 100, { from: accounts[6] })
+                vault.transferTokensToAccount(uuid1, uuid2, web3.toBigNumber("100"), { from: accounts[6] })
             );
         } catch (err) {
             assert(false, err.message);
@@ -157,13 +164,13 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
-            await vault.moveTokensToAddress("1337-er2w-df24-aaa1", accounts[3], 100, { from: owner });
-            let remains = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
-            let transfered = await rnt.balanceOf.call(accounts[3]);
-            assert.equal(remains.c[0], 100);
-            assert.equal(transfered.c[0], 100);
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
+            await vault.moveTokensToAddress(uuid1, accounts[3], web3.toBigNumber("100"), { from: owner });
+            let remains = await vault.balances.call(uuid1, { from: owner });
+            let transfered = await rnt.balances.call(accounts[3]);
+            assert.equal(remains.valueOf(), web3.toBigNumber("100").toString());
+            assert.equal(transfered.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
             assert(false, err.message);
         }
@@ -175,10 +182,10 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await rnt.approve(vault.address, 10000, { from: owner });
+            await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
 
             expectThrow(
-                vault.moveTokensToAddress("1337-er2w-df24-aaa1", accounts[3], 100, { from: owner })
+                vault.moveTokensToAddress(uuid1, accounts[3], web3.toBigNumber("100"), { from: owner })
             );
         } catch (err) {
             assert(false, err.message);
@@ -191,11 +198,11 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
             expectThrow(
-                vault.moveTokensToAddress("1337-er2w-df24-aaa1", accounts[3], 100, { from: accounts[8] })
+                vault.moveTokensToAddress(uuid1, accounts[3], web3.toBigNumber("100"), { from: accounts[8] })
             );
         } catch (err) {
             assert(false, err.message);
@@ -208,13 +215,13 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
-            await vault.moveAllTokensToAddress("1337-er2w-df24-aaa1", accounts[3], { from: owner });
-            let remains = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
-            let transfered = await rnt.balanceOf.call(accounts[3]);
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
+            await vault.moveAllTokensToAddress(uuid1, accounts[3], { from: owner });
+            let remains = await vault.balances.call(uuid1, { from: owner });
+            let transfered = await rnt.balances.call(accounts[3]);
             assert.equal(remains.c[0], 0);
-            assert.equal(transfered.c[0], 200);
+            assert.equal(transfered.valueOf(), web3.toBigNumber("200"));
         } catch (err) {
             assert(false);
         }
@@ -226,11 +233,11 @@ contract('RntTokenVault', function (accounts) {
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 200, { from: owner });
-            await rnt.transfer(vault.address, 200, { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
+            await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
             expectThrow(
-                vault.moveAllTokensToAddress("1337-er2w-df24-aaa1", accounts[3], { from: accounts[8] })
+                vault.moveAllTokensToAddress(uuid1, accounts[3], { from: accounts[8] })
             );
         } catch (err) {
             assert(false, err.message);
@@ -301,17 +308,36 @@ contract('RntTokenVault', function (accounts) {
         }
     });
 
-    it("Check balance of account", async function () {
+    it("Check balance of account from owner", async function () {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
-            await rnt.approve(vault.address, 10000, { from: owner });
-            await vault.addTokensToAccount("1337-er2w-df24-aaa1", 100, { from: owner });
-            const vResponse = await vault.balanceOf.call("1337-er2w-df24-aaa1", { from: owner });
+            await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
+            const vResponse = await vault.balances.call(uuid1, { from: owner });
             let value = vResponse.valueOf();
-            assert.equal(value, 100);
+            assert.equal(value, web3.toBigNumber("100").toString());
+        } catch (err) {
+            assert(false, err.message);
+        }
+
+    });
+
+    
+    it("Check balance of account from allowed address", async function () {
+        try {
+            let rnt = await deployToken();
+            let vault = await deployVault(rnt.address);
+            await rnt.setReleaseAgent(owner);
+            await rnt.releaseTokenTransfer({ from: owner });
+            await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
+            await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
+            await vault.allowAddress(accounts[5], true, { from: owner });
+            const vResponse = await vault.balances.call(uuid1, { from: accounts[5] });
+            let value = vResponse.valueOf();
+            assert.equal(value, web3.toBigNumber("100").toString());
         } catch (err) {
             assert(false, err.message);
         }
