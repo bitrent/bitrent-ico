@@ -8,13 +8,12 @@ var RNTMultiSigWallet = artifacts.require("./RNTMultiSigWallet.sol");
 var PricingStrategy = artifacts.require("./PricingStrategy.sol");
 
 var ownerAddress = "";
-const companyAddress = "";
-const teamAddress = "";
+// const companyAddress = "";
+// const teamAddress = "";
 
-const icoTokens = 699000000;
-const companyTokens = 100000000;
-const bountyTokens = 5000000;
-const teamTokens = 5000000;
+const icoTokens =     '690000000000000000000000000';
+const companyTokens = '100000000000000000000000000';
+const teamTokens =    '5000000000000000000000000';
 
 function bigNumber(n) {
     return new web3.BigNumber(n);
@@ -27,14 +26,14 @@ module.exports = function(deployer) {
         ownerAddress = token.owner.call().then(function(owner) {
           token.approve(RntCrowdsale.address, bigNumber(icoTokens));
           token.approve(RntTokenProxy.address,  bigNumber(icoTokens));
-          token.approve(companyAddress, bigNumber(companyTokens));
-          token.approve(teamAddress, bigNumber(teamTokens));
+          // token.approve(companyAddress, bigNumber(companyTokens));
+          // token.approve(teamAddress, bigNumber(teamTokens));
 
           token.setTransferAgent(owner, true);
           token.setTransferAgent(RntCrowdsale.address, true);
           token.setTransferAgent(RntTokenProxy.address, true);
-          token.setTransferAgent(companyAddress, true);
-          token.setTransferAgent(teamAddress, true);
+          // token.setTransferAgent(companyAddress, true);
+          // token.setTransferAgent(teamAddress, true);
 
           token.setReleaseAgent(owner);
         });

@@ -10,21 +10,33 @@ contract PresaleFinalizeAgent is HasNoEther {
 
     RntPresaleEthereumDeposit public deposit;
 
+    address public crowdsaleAddress;
+
     mapping (address => uint256) public tokensForAddress;
 
     uint256 public weiPerToken = 0;
 
     bool public sane = true;
 
-    function PresaleFinalizeAgent(address _deposit){
+    function PresaleFinalizeAgent(address _deposit, address _crowdsale){
         deposit = RntPresaleEthereumDeposit(_deposit);
+        crowdsaleAddress = _crowdsale;
+    }
+
+    modifier onlyCrowdsale() {
+        require(msg.sender == crowdsaleAddress);
+        _;
     }
 
     function isSane() public constant returns (bool) {
         return sane;
     }
 
-    function finalizePresale(uint256 presaleTokens) public {
+    function setCrowdsaleAddress(address _address) onlyOwner public {
+        crowdsaleAddress = _address;
+    }
+
+    function finalizePresale(uint256 presaleTokens) onlyCrowdsale public {
         require(sane);
         uint256 overallEther = deposit.overallTakenEther();
         uint256 multiplier = 10 ** 18;

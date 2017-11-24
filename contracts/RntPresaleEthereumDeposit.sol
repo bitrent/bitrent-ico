@@ -25,37 +25,17 @@ contract RntPresaleEthereumDeposit is Pausable {
         wallet = RNTMultiSigWallet(_walletAddress);
     }
 
-    function findDonator(address _address) internal returns(bool, uint256) {
-        for (uint i = 0; i < donators.length; i++) {
-            if (donators[i].addr == _address) {
-                return (true, i);
-            }
-        }
-        return (false, 0);
-    }
-
-    function insertDonator(address _address) internal {
-        uint pos = 0;
-        bool isFound = false;
-        (isFound, pos) = findDonator(_address);
-        if (!isFound) {
-            donators.push(Donator(_address, receivedEther[_address]));
-        }
-    }
-
     function updateDonator(address _address) internal {
+        bool isFound = false;
         for (uint i = 0; i < donators.length; i++) {
             if (donators[i].addr == _address) {
                 donators[i].donated =  receivedEther[_address];
+                isFound = true;
+                break;
             }
         }
-    }
-
-    function removeDonator(address _address) internal {
-        for (uint i = 0; i < donators.length; i++) {
-            if (donators[i].addr == _address) {
-                delete donators[i];
-            }
+        if (!isFound) {
+            donators.push(Donator(_address, receivedEther[_address]));
         }
     }
 
@@ -75,7 +55,7 @@ contract RntPresaleEthereumDeposit is Pausable {
 
         overallTakenEther = overallTakenEther.add(msg.value);
         receivedEther[msg.sender] = receivedEther[msg.sender].add(msg.value);
-        insertDonator(msg.sender);
+
         updateDonator(msg.sender);
     }
 

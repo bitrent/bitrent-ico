@@ -50,7 +50,7 @@ contract RntTokenVault is HasNoEther, Pausable {
     @return { amount of tokens }
     */
     function getVaultBalance() onlyAllowedAddresses public constant returns (uint256) {
-        return rntToken.balanceOf(this);
+        return rntToken.balanceOf();
     }
 
     /**

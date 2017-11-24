@@ -13,6 +13,17 @@ contract PricingStrategy is HasNoEther {
     /* How many weis one token costs */
     uint256 public oneTokenInWei;
 
+    address public crowdsaleAddress;
+
+    function PricingStrategy(address _crowdsale) {
+        crowdsaleAddress = _crowdsale;
+    }
+
+    modifier onlyCrowdsale() {
+        require(msg.sender == crowdsaleAddress);
+        _;
+    }
+
     /**
      * Calculate the current price for buy in amount.
      *
@@ -24,7 +35,7 @@ contract PricingStrategy is HasNoEther {
         return tokens;
     }
 
-    function setTokenPriceInWei(uint _oneTokenInWei) public returns (bool) {
+    function setTokenPriceInWei(uint _oneTokenInWei) onlyCrowdsale public returns (bool) {
         oneTokenInWei = _oneTokenInWei;
         return true;
     }

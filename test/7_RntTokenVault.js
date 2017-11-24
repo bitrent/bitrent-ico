@@ -31,7 +31,7 @@ contract('RntTokenVault', function (accounts) {
             await rnt.setReleaseAgent(owner);
             await rnt.releaseTokenTransfer({ from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
-            const ob = await rnt.balanceOf.call(vault.address);
+            const ob = await vault.getVaultBalance.call({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
             const value = await vault.balances.call(uuid1, { from: owner });
        
@@ -296,7 +296,6 @@ contract('RntTokenVault', function (accounts) {
         }
     });
 
-    // balanceOf()
     it("Check balance of vault", async function () {
         try {
             let rnt = await deployToken();

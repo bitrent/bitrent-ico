@@ -14,7 +14,7 @@ const RntTokenProxy = artifacts.require("RntTokenProxy");
 const RntTokenVault = artifacts.require("RntTokenVault");
 const RntCrowdsale = artifacts.require("RntCrowdsale");
 const RNTMultiSigWallet = artifacts.require("RNTMultiSigWallet");
-const PricingStrategy = artifacts.require("PricingStrategy");
+const PricingStrategy = artifacts.require("TestPricingStrategy");
 
 const deployMultisig = (owners, confirmations) => {
     return RNTMultiSigWallet.new(owners, confirmations)
@@ -32,16 +32,16 @@ const deployProxy = (tokenAddress, vaultAddress, defaultAllowed, crowdsaleAddres
     return RntTokenProxy.new(tokenAddress, vaultAddress, defaultAllowed, crowdsaleAddress);
 };
 
-const deployPricingStrategy = () => {
-    return PricingStrategy.new();
+const deployPricingStrategy = (crowdsaleAddress) => {
+    return PricingStrategy.new(crowdsaleAddress);
 };
 
 const deployCrowdsale = (tokenAddress) => {
     return RntCrowdsale.new(tokenAddress);
 };
 
-const deployFinalizeAgent = (depositAddress) => {
-    return FinalizeAgent.new(depositAddress);
+const deployFinalizeAgent = (depositAddress, crowdsaleAddress) => {
+    return FinalizeAgent.new(depositAddress, crowdsaleAddress);
 };
 
 const deployVault = (tokenAddress) => {
@@ -77,13 +77,13 @@ contract('Integration Test', function (accounts) {
         let deposit;
         beforeEach(async () => {
             multisig = await deployMultisig(multisigOwners, web3.toBigNumber("2"));
-            pricing = await deployPricingStrategy();
             token = await deployToken();
             crowdsale = await deployCrowdsale(token.address);
             vault = await deployVault(token.address);
             proxy = await deployProxy(token.address, vault.address, teamAddress, crowdsale.address); 
             deposit = await deployDeposit(multisig.address);
-            agent = await deployFinalizeAgent(deposit.address);
+            agent = await deployFinalizeAgent(deposit.address, crowdsale.address);
+            pricing = await deployPricingStrategy(crowdsale.address);
 
             assert.ok(multisig);
             assert.ok(pricing);
@@ -137,7 +137,23 @@ contract('Integration Test', function (accounts) {
 
         it("4 - Сheck that that crowdsale allocate working", async function () {
             try {
-                await pricing.setTokenPriceInWei(web3.toBigNumber("1000000000"));
+                let status = await crowdsale.getCrowdsaleStatus.call({from: owner});
+    
+                await crowdsale.startPresale({from: owner});
+                status = await crowdsale.getCrowdsaleStatus.call({from: owner});
+    
+                await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
+                await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+    
+                await crowdsale.setPricingStartegy(pricing.address, { from: owner });
+    
+                await crowdsale.finalizePresale({from: owner});
+                status = await crowdsale.getCrowdsaleStatus.call({from: owner});
+    
+                await crowdsale.startIco({from: owner});
+                status = await crowdsale.getCrowdsaleStatus.call({from: owner});
+
+                await pricing.testSetTokenPriceInWei(web3.toBigNumber("1000000000"));
                 await crowdsale.allowAllocation(proxy.address, true);
                 await crowdsale.allowAllocation(owner, true);
                 await token.approve(crowdsale.address, icoTokens, { from: owner });

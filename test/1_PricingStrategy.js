@@ -1,7 +1,7 @@
-const PricingStrategy = artifacts.require("PricingStrategy");
+const PricingStrategy = artifacts.require("TestPricingStrategy");
 
-const deployPricingStrategy = () => {
-    return PricingStrategy.new();
+const deployPricingStrategy = (crowdsaleAddr) => {
+    return PricingStrategy.new(crowdsaleAddr);
 };
 
 const getParamFromTxEvent = require('./helpers/getParamFromTxEvent');
@@ -16,7 +16,7 @@ contract('PricingStrategy', function (accounts) {
         try {
             const instance = await deployPricingStrategy();
 
-            instance.setTokenPriceInWei(web3.toBigNumber("10"));
+            instance.testSetTokenPriceInWei(web3.toBigNumber("10"));
             const value = await instance.calculatePrice.call(web3.toBigNumber("1000"), 2);
             
             // should be 100 tokens, but we have 2 decimals, it means that we expecting 10000
@@ -31,7 +31,7 @@ contract('PricingStrategy', function (accounts) {
         try {
             const instance = await deployPricingStrategy();
 
-            instance.setTokenPriceInWei(web3.toBigNumber("10"));
+            instance.testSetTokenPriceInWei(web3.toBigNumber("10"));
             const value = await instance.oneTokenInWei.call();
            
             assert.equal(value.valueOf(), web3.toBigNumber("10").toString());

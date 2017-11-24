@@ -228,17 +228,9 @@ contract RntCrowdsale is Pausable {
          It will transfer ether to wallet only if investment did inside ethereum using payable method.
     @param _receiver The Ethereum address who receives the tokens.
     @param _customerUuid (optional) UUID v4 to track the successful payments on the server side.
-    @param _weiAmount Wei amount, that should be specified only if user was invested outside ethereum.
     */
-    function investInternal(address _receiver, bytes16 _customerUuid, uint256 _weiAmount) private {
-        uint weiAmount = 0;
-        bool isAllocation = false;
-        if (_weiAmount != 0) {
-            weiAmount = _weiAmount;
-            isAllocation = true;
-        } else {
-            weiAmount = msg.value;
-        }
+    function investInternal(address _receiver, bytes16 _customerUuid) private {
+        uint weiAmount = msg.value;
 
         uint256 tokenAmount = pricingStrategy.calculatePrice(weiAmount, 18);
 
@@ -255,13 +247,38 @@ contract RntCrowdsale is Pausable {
 
         assignTokens(owner, _receiver, tokenAmount);
 
-        if (!isAllocation) {
-            // Pocket the money
-            wallet.transfer(weiAmount);
-        }
+        // Pocket the money
+        wallet.transfer(weiAmount);
 
         // Tell us invest was success
         Invested(_receiver, weiAmount, tokenAmount, _customerUuid);
+    }
+
+    /**
+    @notice Handle tokens allocating.
+    @dev Uses when tokens was bought not in ethereum
+    @param _receiver The Ethereum address who receives the tokens.
+    @param _customerUuid (optional) UUID v4 to track the successful payments on the server side.
+    @param _weiAmount Wei amount, that should be specified only if user was invested out
+    */
+    function allocateInternal(address _receiver, bytes16 _customerUuid, uint256 _weiAmount) private {
+        uint256 tokenAmount = pricingStrategy.calculatePrice(_weiAmount, 18);
+
+        require(tokenAmount != 0);
+
+        if (icoInvestments[_receiver] == 0) {
+            // A new investor
+            icoInvestmentsCount++;
+        }
+        icoInvestments[_receiver] = icoInvestments[_receiver].add(_weiAmount);
+        icoTokenTransfers[_receiver] = icoTokenTransfers[_receiver].add(tokenAmount);
+        icoReceivedWei = icoReceivedWei.add(_weiAmount);
+        icoTokensSold = icoTokensSold.add(tokenAmount);
+
+        assignTokens(owner, _receiver, tokenAmount);
+
+        // Tell us invest was success
+        Invested(_receiver, _weiAmount, tokenAmount, _customerUuid);
     }
 
     /**
@@ -272,7 +289,7 @@ contract RntCrowdsale is Pausable {
     @param _weiAmount User invested amount of money in wei.
     */
     function allocateTokens(address _receiver, bytes16 _customerUuid, uint256 _weiAmount) whenNotPaused canAllocateTokens public {
-        investInternal(_receiver, _customerUuid, _weiAmount);
+        allocateInternal(_receiver, _customerUuid, _weiAmount);
     }
 
     /**
@@ -281,7 +298,7 @@ contract RntCrowdsale is Pausable {
     @param _customerUuid (optional) UUID v4 to track the successful payments on the server side
     */
     function invest(bytes16 _customerUuid) whenNotPaused inStatus(Status.ICO) public payable {
-        investInternal(msg.sender, _customerUuid, 0);
+        investInternal(msg.sender, _customerUuid);
     }
 
     /**
