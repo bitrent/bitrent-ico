@@ -1,14 +1,16 @@
 {
   "name": "megaline-ico",
-  "version": "0.0.7",
+  "version": "1.0.0",
   "description": "A set of Smart Contracts for Ethereum based ICO",
   "main": "truffle migrate",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "truffle test",
-    "coverage": "sh coverage.sh"
+    "compile": "./node_modules/.bin/truffle compile",
+    "test": "./node_modules/.bin/truffle test",
+    "tests": "sh run-tests.sh",
+    "coverage": "sh ./coverage.sh"
   },
   "repository": {
     "type": "git",
@@ -22,14 +24,13 @@
   "license": "ISC",
   "dependencies": {
     "truffle": "3.4.11",
-    "truffle-hdwallet-provider": "0.0.3",
-    "uuid-parse": "^1.0.0",
     "zeppelin-solidity": "1.3.0"
   },
   "devDependencies": {
+    "@digix/doxity": "^0.5.2",
     "ethereumjs-testrpc": "4.1.3",
     "solcheck": "^0.1.3",
     "solidity-coverage": "^0.2.5",
-    "solium": "^1.0.0"
+    "uuid-parse": "^1.0.0"
   }
 }

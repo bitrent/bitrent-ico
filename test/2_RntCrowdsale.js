@@ -144,7 +144,7 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
 
             const pricing = await deployPricingStrategy();
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
@@ -175,7 +175,7 @@ contract('RntCrowdsale', function (accounts) {
 
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
             expectThrow(
                 crowdsale.finalizePresale({from: owner})
             );
@@ -242,7 +242,7 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
 
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
 
@@ -287,7 +287,7 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
 
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
 
@@ -329,7 +329,7 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: owner, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
 
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
 
@@ -380,7 +380,7 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: acc1, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: acc1, value: web3.toBigNumber("1000000000000000000") });
 
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
 
@@ -417,8 +417,8 @@ contract('RntCrowdsale', function (accounts) {
             assert.equal(STATUS.PRESALE.value, status.c[0]);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
-            await deposit.giveEther({ from: acc1, value: web3.toBigNumber("1000000000000000000") });
-            await deposit.giveEther({ from: acc2, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: acc1, value: web3.toBigNumber("1000000000000000000") });
+            await deposit.sendTransaction({ from: acc2, value: web3.toBigNumber("1000000000000000000") });
 
             await crowdsale.setPricingStartegy(pricing.address, { from: owner });
 

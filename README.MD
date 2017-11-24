@@ -7,10 +7,13 @@
 (in the first case you will get predefined set of accounts suitable for the all test case)
 
 #### Run full test suite
-`./node_modules/.bin/truffle test`
+`npm run tests`  
 
 #### Run specified test
-`./node_modules/.bin/truffle test ./test/RNTMultiSigWallet.js`
+`npm run test ./test/RNTMultiSigWallet.js`  
+
+#### Compile smart contracts
+`npm run compile`  
 
 #### Generate test coverage report
 `sh coverage.sh` or `./node_modules/.bin/solidity-coverage`   
@@ -38,8 +41,7 @@ Truffle v3.4.11
 OpenZeppelin 1.3.0  
 solidity-coverage 0.2.5  
 Solium linter 1.0.0 BETA  
-solcheck linter 0.1.3  
-oyente analysis tool v0.2.6  
+solcheck linter 0.1.3    
 
 #### Deployment price
 Gas usage: 10455403

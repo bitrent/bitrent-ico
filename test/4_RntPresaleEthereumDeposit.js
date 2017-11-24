@@ -27,9 +27,9 @@ contract('RntPresaleEthereumDeposit', function (accounts) {
         try {
             const wallet = await deployMultisig([accounts[0], accounts[1]], 2);
             const instance = await deployDeposit(wallet.address);
-            await instance.giveEther({ from: acc1, value: web3.toBigNumber("100") });
-            await instance.giveEther({ from: acc1, value: web3.toBigNumber("42") });
-            await instance.giveEther({ from: acc2, value: web3.toBigNumber("132") });
+            await instance.sendTransaction({ from: acc1, value: web3.toBigNumber("100") });
+            await instance.sendTransaction({ from: acc1, value: web3.toBigNumber("42") });
+            await instance.sendTransaction({ from: acc2, value: web3.toBigNumber("132") });
             const acc1Ether1 = await instance.receivedEtherFrom.call(acc1, { from: owner });
             const acc2Ether1 = await instance.receivedEtherFrom.call(acc2, { from: owner });
             const acc1Ether2 = await instance.receivedEtherFrom.call(acc1, { from: acc1 });
@@ -47,8 +47,8 @@ contract('RntPresaleEthereumDeposit', function (accounts) {
         try {
             const wallet = await deployMultisig([accounts[0], accounts[1]], 2);
             const instance = await deployDeposit(wallet.address);
-            await instance.giveEther({ from: acc1, value: web3.toBigNumber("100") });
-            await instance.giveEther({ from: acc2, value: web3.toBigNumber("132") });
+            await instance.sendTransaction({ from: acc1, value: web3.toBigNumber("100") });
+            await instance.sendTransaction({ from: acc2, value: web3.toBigNumber("132") });
             const ether = await instance.receivedEtherFrom.call(acc1, { from: acc4 });
             assert.equal(ether.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
@@ -60,8 +60,8 @@ contract('RntPresaleEthereumDeposit', function (accounts) {
         try {
             const wallet = await deployMultisig([accounts[0], accounts[1]], 2);
             const instance = await deployDeposit(wallet.address);
-            await instance.giveEther({ from: acc1, value: web3.toBigNumber("100") });
-            await instance.giveEther({ from: acc2, value: web3.toBigNumber("132") });
+            await instance.sendTransaction({ from: acc1, value: web3.toBigNumber("100") });
+            await instance.sendTransaction({ from: acc2, value: web3.toBigNumber("132") });
             let length = await instance.getDonatorsNumber.call({ from: owner });
             length = length.c[0];
             assert.equal(length, 2);
@@ -91,7 +91,7 @@ contract('RntPresaleEthereumDeposit', function (accounts) {
         try {
             const wallet = await deployMultisig([accounts[0], accounts[1]], 2);
             const instance = await deployDeposit(wallet.address);
-            await instance.giveEther({ from: acc1, value: 2 });
+            await instance.sendTransaction({ from: acc1, value: 2 });
             const overallEther = await instance.overallTakenEther.call({ from: acc3 });
         } catch (err) {
             assert(false, err.message);
@@ -103,7 +103,7 @@ contract('RntPresaleEthereumDeposit', function (accounts) {
         try {
             const wallet = await deployMultisig([accounts[0], accounts[1]], 2);
             const instance = await deployDeposit(wallet.address);
-            await instance.giveEther({ from: acc1, value: 2 });
+            await instance.sendTransaction({ from: acc1, value: 2 });
             const overallEther = await instance.myEther.call({ from: acc1 });
         } catch (err) {
             assert(false, err.message);

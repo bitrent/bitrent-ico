@@ -79,18 +79,6 @@ contract RntPresaleEthereumDeposit is Pausable {
         updateDonator(msg.sender);
     }
 
-    /*
-     *  Function for sending ether to wallet and update donators info
-     */
-    function giveEther() whenNotPaused payable {
-        wallet.transfer(msg.value);
-
-        overallTakenEther = overallTakenEther.add(msg.value);
-        receivedEther[msg.sender] = receivedEther[msg.sender].add(msg.value);
-        insertDonator(msg.sender);
-        updateDonator(msg.sender);
-    }
-
     function receivedEtherFrom(address _from) whenNotPaused constant public returns(uint256) {
         return receivedEther[_from];
     }
