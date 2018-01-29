@@ -5,7 +5,9 @@ import "../library/lifecycle/Pausable.sol";
 import "../library/math/SafeMath.sol";
 import "../library/interface/IRntToken.sol";
 
-
+/*
+ * @deprecated - This contracts won't be used in ICO
+ */
 contract RntTokenVault is HasNoEther, Pausable {
     using SafeMath for uint256;
 
@@ -50,7 +52,7 @@ contract RntTokenVault is HasNoEther, Pausable {
     @return { amount of tokens }
     */
     function getVaultBalance() onlyAllowedAddresses public constant returns (uint256) {
-        return rntToken.balanceOf();
+        return rntToken.balanceOf(address(this));
     }
 
     /**

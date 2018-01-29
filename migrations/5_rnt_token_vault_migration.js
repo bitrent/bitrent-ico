@@ -1,6 +1,6 @@
 var RntTokenVault = artifacts.require("./RntTokenVault.sol");
-var RntToken = artifacts.require("./RntToken.sol");
+var RNTBToken = artifacts.require("./RNTBToken.sol");
 
 module.exports = function(deployer) {
-    deployer.deploy(RntTokenVault, RntToken.address);
+    deployer.deploy(RntTokenVault, RNTBToken.address);
 };

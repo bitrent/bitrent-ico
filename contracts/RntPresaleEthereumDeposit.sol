@@ -3,14 +3,11 @@ pragma solidity ^0.4.15;
 import "../library/lifecycle/Pausable.sol";
 import "../library/math/SafeMath.sol";
 import "./RNTMultiSigWallet.sol";
+import "../library/interface/IRntPresaleEthereumDeposit.sol";
 
 
-contract RntPresaleEthereumDeposit is Pausable {
+contract RntPresaleEthereumDeposit is IRntPresaleEthereumDeposit, Pausable {
     using SafeMath for uint256;
-
-    uint256 public overallTakenEther = 0;
-
-    mapping (address => uint256) public receivedEther;
 
     struct Donator {
         address addr;

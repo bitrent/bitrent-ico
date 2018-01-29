@@ -1,6 +1,6 @@
 var RntCrowdsale = artifacts.require("./RntCrowdsale.sol");
-var RntToken = artifacts.require("./RntToken.sol");
+var RNTBToken = artifacts.require("./RNTBToken.sol");
 
 module.exports = function(deployer) {
-    deployer.deploy(RntCrowdsale, RntToken.address);
+    deployer.deploy(RntCrowdsale, RNTBToken.address);
 };

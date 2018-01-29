@@ -1,3 +1,6 @@
+//Create infura config from ./infura-config-example.js
+// const infuraConfig = require('infura-config')();
+
 module.exports = {
     networks: {
         development: {
@@ -18,6 +21,12 @@ module.exports = {
             port: 8545,
             from: "9e65c373a97793e8d36cb8316ecbe79940110f90",
         },
+        // ropsten: {
+        //     network_id: 3,    // Official ropsten network id
+        //     provider: infuraConfig.provider, // Use our custom provider
+        //     from: infuraConfig.from,    // Use the address we derived
+        //     gas: 4600000
+        // },
         live: {
             network_id: 1,
             host: "localhost",

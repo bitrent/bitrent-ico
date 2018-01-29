@@ -1,5 +1,5 @@
-var RntToken = artifacts.require("./RntToken.sol");
+var RNTBToken = artifacts.require("./RNTBToken.sol");
 
 module.exports = function(deployer) {
-    deployer.deploy(RntToken);
+    deployer.deploy(RNTBToken);
 };

@@ -2,24 +2,14 @@ pragma solidity ^0.4.15;
 
 import "../library/ownership/HasNoEther.sol";
 import "../library/math/SafeMath.sol";
-import "./RntPresaleEthereumDeposit.sol";
+import "../library/interface/IFinalizeAgent.sol";
+import "../library/interface/IRntPresaleEthereumDeposit.sol";
 
-
-contract PresaleFinalizeAgent is HasNoEther {
+contract PresaleFinalizeAgent is IFinalizeAgent, HasNoEther {
     using SafeMath for uint256;
 
-    RntPresaleEthereumDeposit public deposit;
-
-    address public crowdsaleAddress;
-
-    mapping (address => uint256) public tokensForAddress;
-
-    uint256 public weiPerToken = 0;
-
-    bool public sane = true;
-
     function PresaleFinalizeAgent(address _deposit, address _crowdsale){
-        deposit = RntPresaleEthereumDeposit(_deposit);
+        deposit = IRntPresaleEthereumDeposit(_deposit);
         crowdsaleAddress = _crowdsale;
     }
 
@@ -44,5 +34,9 @@ contract PresaleFinalizeAgent is HasNoEther {
         weiPerToken = overallEther.div(presaleTokens);
         require(weiPerToken > 0);
         sane = false;
+    }
+
+    function isFinalizeAgent() public constant returns (bool) {
+        return true;
     }
 }

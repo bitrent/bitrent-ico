@@ -1,16 +1,16 @@
-const RntToken = artifacts.require("RntToken");
+const RNTBToken = artifacts.require("RNTBToken");
 
-const INITIAL_SUPPLY = web3.toBigNumber("1000000000000000000000000000");
+const INITIAL_SUPPLY = web3.toBigNumber("1e27");
 
 const deployToken = () => {
-    return RntToken.new();
+    return RNTBToken.new();
 };
 
 const getParamFromTxEvent = require('./helpers/getParamFromTxEvent');
 const expectThrow = require('./helpers/expectThrow');
 const ether = require('./helpers/ether');
 
-contract('RntToken', function (accounts) {
+contract('RNTBToken', function (accounts) {
 
     const owner = accounts[0];
     const tokensForApprove = web3.toBigNumber("666");
@@ -19,11 +19,9 @@ contract('RntToken', function (accounts) {
     it("RNT_TOKEN_1 - Check that tokens can be transfered", async function () {
         try {
             let instance = await deployToken();
-            const ob = await instance.balanceOf.call({ from: owner });
-            await instance.setTransferAgent(owner, true, { from: owner });
-            const transferEvent = await instance.transfer(accounts[2], web3.toBigNumber("100"), { from: owner });
-            const recepientBalance = await instance.balanceOf.call({ from: accounts[2] });
-            const senderBalance = await instance.balanceOf.call({ from: owner });
+            await instance.transfer(accounts[2], web3.toBigNumber("100"), { from: owner });
+            const recepientBalance = await instance.balanceOf(accounts[2]);
+            const senderBalance = await instance.balanceOf(owner);
             assert.equal(recepientBalance.toString(), web3.toBigNumber("100").toString());
             assert.equal(senderBalance.toString(), INITIAL_SUPPLY.minus(100).toString());
         } catch (err) {
@@ -36,8 +34,6 @@ contract('RntToken', function (accounts) {
     it("RNT_TOKEN_2 - Check that account can not transfer more tokens then have", async function () {
         try {
             let instance = await deployToken();
-            await instance.setTransferAgent(owner, true, { from: owner });
-            await instance.setTransferAgent(accounts[2], true, { from: owner });
             await instance.transfer(accounts[2], web3.toBigNumber("100"), { from: owner });
 
             expectThrow(
@@ -48,24 +44,11 @@ contract('RntToken', function (accounts) {
         }
     });
 
-    it("RNT_TOKEN_3 - Check that account can not transfer tokens if it not transfer agent or tokens was not released", async function () {
-        try {
-            let instance = await deployToken();
-
-            expectThrow(
-                instance.transfer(accounts[2], web3.toBigNumber("60"), { from: owner })
-            );
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
     it("RNT_TOKEN_4 - Check account balance", async function () {
         try {
             let instance = await deployToken();
-            await instance.setTransferAgent(owner, true, { from: owner });
             await instance.transfer(accounts[2], web3.toBigNumber("100"), { from: owner });
-            const recepientBalance = await instance.balanceOf.call({ from: accounts[2] });
+            const recepientBalance = await instance.balanceOf(accounts[2]);
             assert.equal(recepientBalance.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
             assert(false, err.message);
@@ -76,12 +59,10 @@ contract('RntToken', function (accounts) {
     it("RNT_TOKEN_5 - Check that account can transfer approved tokens", async function () {
         try {
             let instance = await deployToken();
-            await instance.setReleaseAgent(owner);
-            await instance.releaseTokenTransfer({ from: owner });
             await instance.transfer(accounts[1], web3.toBigNumber("100"), { from: owner });
             await instance.approve(accounts[2], web3.toBigNumber("50"), { from: accounts[1] });
             await instance.transferFrom(accounts[1], accounts[3], web3.toBigNumber("50"), { from: accounts[2] });
-            const recepientBalance = await instance.balanceOf.call({ from: accounts[3] });
+            const recepientBalance = await instance.balanceOf(accounts[3]);
             assert.equal(recepientBalance.valueOf(), web3.toBigNumber("50").toString());
         } catch (err) {
             assert(false, err.message);
@@ -97,103 +78,11 @@ contract('RntToken', function (accounts) {
         }
     });
 
-    it("RNT_TOKEN_7 - Check that transfer agent can transfer tokens", async function () {
-        try {
-            let instance = await deployToken();
-            await instance.setTransferAgent(owner, true, { from: owner });
-            await instance.approve(accounts[5], web3.toBigNumber("100"), { from: owner });
-            await instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] });
-            let recepientBalance = await instance.balanceOf.call({ from: accounts[2] });
-            let ownerBalance = await instance.balanceOf.call({ from:owner });
-            assert.equal(recepientBalance.toString(), web3.toBigNumber("100").toString());
-            assert.equal(ownerBalance.toString(), INITIAL_SUPPLY.minus(100).toString());
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
-    it("RNT_TOKEN_8 - Check that owner can set transfer agent", async function () {
-        try {
-            let instance = await deployToken();
-            await instance.setTransferAgent(owner, true, { from: owner });
-            await instance.approve(accounts[5], web3.toBigNumber("100"), { from: owner });
-            await instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] });
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
-    it("RNT_TOKEN_9 - Check that owner can set release agent", async function () {
-        try {
-            let instance = await deployToken();
-            await instance.setReleaseAgent(owner, { from: owner });
-            await instance.releaseTokenTransfer({ from: owner });
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
-    it("RNT_TOKEN_10 - Check that not owner can not set transfer agent", async function () {
-        try {
-            let instance = await deployToken();
-
-            expectThrow(
-                instance.setTransferAgent(accounts[1], true, { from: accounts[5] })
-            );
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
-    it("RNT_TOKEN_11 - Check that not owner can not set release agent", async function () {
-         try {
-             let instance = await deployToken();
- 
-             expectThrow(
-                 instance.setReleaseAgent(accounts[1], { from: accounts[3] })
-             );
-         } catch (err) {
-             assert(false, err.message);
-         }
-     });
- 
-     it("RNT_TOKEN_12 - Check that owner can remove transfer agent", async function () {
-         try {
-             let instance = await deployToken();
-             await instance.setTransferAgent(owner, true, { from: owner });
-             await instance.approve(accounts[5], web3.toBigNumber("200"), { from: owner });
-             await instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] });
-             await instance.setTransferAgent(owner, false, { from: owner });
- 
-             expectThrow(
-                 instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] })
-             );
-         } catch (err) {
-             assert(false, err.message);
-         }
-     });
-
-     it("RNT_TOKEN_12 - Check that owner can remove transfer agent", async function () {
-        try {
-            let instance = await deployToken();
-            await instance.setTransferAgent(owner, true, { from: owner });
-            await instance.approve(accounts[5], web3.toBigNumber("200"), { from: owner });
-            await instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] });
-            await instance.setTransferAgent(owner, false, { from: owner });
-
-            expectThrow(
-                instance.transferFrom(owner, accounts[2], web3.toBigNumber("100"), { from: accounts[5] })
-            );
-        } catch (err) {
-            assert(false, err.message);
-        }
-    });
-
     // balanceOfSender()
-    it("RNT_TOKEN_13 - Check that balanceOfr returns senders amount of tokens", async function() {
+    it("RNT_TOKEN_13 - Check that balanceOf returns senders amount of tokens", async function() {
         try {
             let instance = await deployToken();
-            const balance = await instance.balanceOf.call();
+            const balance = await instance.balanceOf(owner);
             assert.equal(balance.toString(), INITIAL_SUPPLY.toString());
         } catch (err) {
             assert(false, err.message);
@@ -203,8 +92,6 @@ contract('RntToken', function (accounts) {
     it("Check that account can not transfer unapproved tokens", async function () {
          try {
              let instance = await deployToken();
-             await instance.setReleaseAgent(owner);
-             await instance.releaseTokenTransfer({ from: owner });
  
              expectThrow(
                  instance.transferFrom(owner, accounts[2], expectedBalance, { from: accounts[1] })

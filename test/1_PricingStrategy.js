@@ -1,12 +1,10 @@
-const PricingStrategy = artifacts.require("TestPricingStrategy");
+const PricingStrategy = artifacts.require("PricingStrategy");
 
 const deployPricingStrategy = (crowdsaleAddr) => {
     return PricingStrategy.new(crowdsaleAddr);
 };
 
-const getParamFromTxEvent = require('./helpers/getParamFromTxEvent');
 const expectThrow = require('./helpers/expectThrow');
-const ether = require('./helpers/ether');
 
 contract('PricingStrategy', function (accounts) {
 
@@ -14,13 +12,12 @@ contract('PricingStrategy', function (accounts) {
 
     it("RNT_PRICING_STRATEGY_1 - Check that tokens calculated right way", async function () {
         try {
-            const instance = await deployPricingStrategy();
+            let instance = await deployPricingStrategy();
 
-            instance.testSetTokenPriceInWei(web3.toBigNumber("10"));
-            const value = await instance.calculatePrice.call(web3.toBigNumber("1000"), 2);
+            await instance.setTokenPriceInWei(web3.toBigNumber("1e18"));
+            const value = await instance.calculatePrice.call(web3.toBigNumber("1e18"), 18);
             
-            // should be 100 tokens, but we have 2 decimals, it means that we expecting 10000
-            assert.equal(value.valueOf(), web3.toBigNumber("10000").toString());
+            assert.equal(value.toString(), web3.toBigNumber("1e18").toString());
         } catch (err) {
             assert(false, err.message);
         }
@@ -29,15 +26,55 @@ contract('PricingStrategy', function (accounts) {
     
     it("Check that token price can be set", async function () {
         try {
-            const instance = await deployPricingStrategy();
+            const accountAllowedToSetPricingStrategy = accounts[1];
 
-            instance.testSetTokenPriceInWei(web3.toBigNumber("10"));
-            const value = await instance.oneTokenInWei.call();
+            let instance = await deployPricingStrategy();
+
+            await instance.allowAddress(accountAllowedToSetPricingStrategy, true);
+
+            await instance.setTokenPriceInWei(web3.toBigNumber("1e18"), {from: accountAllowedToSetPricingStrategy});
+            const value = await instance.oneTokenInWei();
            
-            assert.equal(value.valueOf(), web3.toBigNumber("10").toString());
+            assert.equal(value.toString(), web3.toBigNumber("1e18").toString());
         } catch (err) {
             assert(false, err.message);
         }
     });
 
+    it('Check that token price could not be set if address was removed from the whitelist', async function () {
+       try {
+           const accountAllowedToSetPricingStrategy = accounts[1];
+
+           let instance = await deployPricingStrategy();
+
+           await instance.allowAddress(accountAllowedToSetPricingStrategy, true);
+
+           await instance.setTokenPriceInWei(web3.toBigNumber("1e18"), {from: accountAllowedToSetPricingStrategy});
+           const value = await instance.oneTokenInWei.call();
+
+           assert.equal(value.toString(), web3.toBigNumber("1e18").toString());
+
+           await instance.allowAddress(accountAllowedToSetPricingStrategy, false);
+
+           expectThrow(
+               instance.setTokenPriceInWei(web3.toBigNumber("1e18"), {from: accountAllowedToSetPricingStrategy})
+           )
+       } catch(err) {
+           assert(false, err.message);
+       }
+    });
+
+    it('Check that token pricng could not be set from the non-whitelisted address', async function () {
+         try {
+             const accountAllowedToSetPricingStrategy = accounts[1];
+
+             let instance = await deployPricingStrategy();
+
+             expectThrow(
+                 instance.setTokenPriceInWei(web3.toBigNumber("1e18"), {from: accountAllowedToSetPricingStrategy})
+             )
+         } catch(err) {
+             assert(false, err.message);
+         }
+    });
 });

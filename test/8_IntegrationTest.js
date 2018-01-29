@@ -7,14 +7,14 @@ const uuidParser = require('./helpers/uuidParser');
 const INITIAL_SUPPLY = web3.toBigNumber("1000000000000000000000000000");
 
 
-const RntToken = artifacts.require("RntToken");
+const RNTBToken = artifacts.require("RNTBToken");
 const FinalizeAgent = artifacts.require("PresaleFinalizeAgent");
 const RntDeposit = artifacts.require("RntPresaleEthereumDeposit");
 const RntTokenProxy = artifacts.require("RntTokenProxy");
 const RntTokenVault = artifacts.require("RntTokenVault");
 const RntCrowdsale = artifacts.require("RntCrowdsale");
 const RNTMultiSigWallet = artifacts.require("RNTMultiSigWallet");
-const PricingStrategy = artifacts.require("TestPricingStrategy");
+const PricingStrategy = artifacts.require("PricingStrategy");
 
 const deployMultisig = (owners, confirmations) => {
     return RNTMultiSigWallet.new(owners, confirmations)
@@ -25,7 +25,7 @@ const deployDeposit = (walletAddr) => {
 };
 
 const deployToken = () => {
-    return RntToken.new();
+    return RNTBToken.new();
 };
 
 const deployProxy = (tokenAddress, vaultAddress, defaultAllowed, crowdsaleAddress) => {
@@ -61,10 +61,9 @@ contract('Integration Test', function (accounts) {
         const companyAddress = accounts[8];
         const teamAddress = accounts[9];
         
-        const icoTokens = web3.toBigNumber("699000000000000000000000000");
+        const icoTokens = web3.toBigNumber("6.9e26");
         const companyTokens = web3.toBigNumber("100000000000000000000000000");
         const presaleTokens = web3.toBigNumber("200000000000000000000000000");
-        const bountyTokens = web3.toBigNumber("5000000000000000000000000");
         const teamTokens = web3.toBigNumber("5000000000000000000000000");
 
         let token;
@@ -95,10 +94,13 @@ contract('Integration Test', function (accounts) {
             assert.ok(agent);
 
             await crowdsale.setPresaleFinalizeAgent(agent.address);     
-            await crowdsale.setPricingStartegy(pricing.address);
+            await crowdsale.setPricingStrategy(pricing.address);
             await crowdsale.setMultiSigWallet(multisig.address);
             await crowdsale.setBackendProxyBuyer(proxy.address);
             await crowdsale.setPresaleEthereumDeposit(deposit.address);
+
+            await proxy.setPricingStrategy(pricing.address);
+            await proxy.setCrowdSale(crowdsale.address);
         });
       
 
@@ -108,18 +110,6 @@ contract('Integration Test', function (accounts) {
                 await token.approve(proxy.address, presaleTokens);
                 await token.approve(companyAddress, companyTokens);
                 await token.approve(teamAddress, teamTokens);
-            } catch (err) {
-                assert(false, err.message);
-            }
-        });
-
-        it("2 - Check that transfer agnets can be set", async function () {
-            try {
-                await token.setTransferAgent(owner, true);
-                await token.setTransferAgent(crowdsale.address, true);
-                await token.setTransferAgent(proxy.address, true);
-                await token.setTransferAgent(companyAddress, true);
-                await token.setTransferAgent(teamAddress, true);
             } catch (err) {
                 assert(false, err.message);
             }
@@ -145,20 +135,21 @@ contract('Integration Test', function (accounts) {
                 await crowdsale.setPresaleFinalizeAgent(agent.address, { from: owner });
                 await deposit.sendTransaction({ from: owner, value: web3.toBigNumber("1000000000000000000") });
     
-                await crowdsale.setPricingStartegy(pricing.address, { from: owner });
-    
+                await crowdsale.setPricingStrategy(pricing.address, { from: owner });
+                await pricing.allowAddress(crowdsale.address, true);
+
+
                 await crowdsale.finalizePresale({from: owner});
                 status = await crowdsale.getCrowdsaleStatus.call({from: owner});
     
                 await crowdsale.startIco({from: owner});
                 status = await crowdsale.getCrowdsaleStatus.call({from: owner});
 
-                await pricing.testSetTokenPriceInWei(web3.toBigNumber("1000000000"));
+                await pricing.setTokenPriceInWei(web3.toBigNumber("1000000000000000000"));
                 await crowdsale.allowAllocation(proxy.address, true);
                 await crowdsale.allowAllocation(owner, true);
-                await token.approve(crowdsale.address, icoTokens, { from: owner });
-                await token.setTransferAgent(owner, true, { from: owner }); 
-                await proxy.allocate(accounts[6], uuid1, web3.toBigNumber("200000000000000"), {from: owner});
+                await token.approve(crowdsale.address, icoTokens, {from: owner});
+                await proxy.allocate(accounts[6], uuid1, ether(1), {from: owner});
             } catch (err) {
                 assert(false, err.message);
             }

@@ -2,14 +2,14 @@ pragma solidity ^0.4.15;
 
 
 import "./PricingStrategy.sol";
-import "./PresaleFinalizeAgent.sol";
 import "./RntPresaleEthereumDeposit.sol";
 import "../library/interface/IRntToken.sol";
 import "../library/lifecycle/Pausable.sol";
 import "../library/math/SafeMath.sol";
+import "../library/interface/ICrowdSale.sol";
+import "../library/interface/IFinalizeAgent.sol";
 
-
-contract RntCrowdsale is Pausable {
+contract RntCrowdsale is ICrowdSale, Pausable {
     using SafeMath for uint256;
 
     enum Status {Unknown, Presale, ICO, Finalized} // Crowdsale status
@@ -30,23 +30,23 @@ contract RntCrowdsale is Pausable {
 
     uint256 public icoInvestmentsCount = 0;
 
-    mapping (address => uint256) public icoInvestments;
+    mapping(address => uint256) public icoInvestments;
 
-    mapping (address => uint256) public icoTokenTransfers;
+    mapping(address => uint256) public icoTokenTransfers;
 
     IRntToken public token;
 
     PricingStrategy public pricingStrategy;
 
-    PresaleFinalizeAgent public presaleFinalizeAgent;
-
     RntPresaleEthereumDeposit public deposit;
+
+    IFinalizeAgent public presaleFinalizeAgent;
 
     address public wallet;
 
     address public proxy;
 
-    mapping (address => bool) public tokensAllocationAllowed;
+    mapping(address => bool) public tokensAllocationAllowed;
 
     uint public presaleStartTime;
 
@@ -69,15 +69,12 @@ contract RntCrowdsale is Pausable {
 
     event IcoFinalized(uint timestamp);
 
+    event PricingStrategyWasSet(address _pricingStrategy);
+
     /**
     @notice Token price was calculated.
     */
     event TokensPerWeiReceived(uint tokenPrice);
-
-    /**
-    @notice Presale tokens was claimed.
-    */
-    event PresaleTokensClaimed(uint count);
 
     function RntCrowdsale(address _tokenAddress) {
         token = IRntToken(_tokenAddress);
@@ -109,19 +106,13 @@ contract RntCrowdsale is Pausable {
     }
 
     /**
-    @notice Set PresaleFinalizeAgent address.
-    @dev Used to calculate price for one token.
-    */
-    function setPresaleFinalizeAgent(address _agentAddress) whenNotPaused onlyOwner external {
-        presaleFinalizeAgent = PresaleFinalizeAgent(_agentAddress);
-    }
-
-    /**
     @notice Set PricingStrategy address.
     @dev Used to calculate tokens that will be received through investment.
     */
-    function setPricingStartegy(address _pricingStrategyAddress) whenNotPaused onlyOwner external {
+    function setPricingStrategy(address _pricingStrategyAddress) whenNotPaused onlyOwner external {
         pricingStrategy = PricingStrategy(_pricingStrategyAddress);
+        require(pricingStrategy.isPricingStrategy());
+        PricingStrategyWasSet(_pricingStrategyAddress);
     }
 
     /**
@@ -149,6 +140,15 @@ contract RntCrowdsale is Pausable {
     }
 
     /**
+    @notice Set PresaleFinalizeAgent address.
+    @dev Used to calculate price for one token.
+    */
+    function setPresaleFinalizeAgent(address _agentAddress) whenNotPaused onlyOwner external {
+        presaleFinalizeAgent = IFinalizeAgent(_agentAddress);
+        require(presaleFinalizeAgent.isFinalizeAgent());
+    }
+
+    /**
     @notice Get current crowdsale status.
     @return { One of possible crowdsale statuses [Unknown, Presale, ICO, Finalized] }
     */
@@ -170,8 +170,8 @@ contract RntCrowdsale is Pausable {
     }
 
     /**
-    @notice Finalize presale, calculate token price, track finalize time.
-    */
+       @notice Finalize presale, calculate token price, track finalize time.
+       */
     function finalizePresale() whenNotPaused onlyOwner external {
         require(isPresaleStarted && !isPresaleFinalized);
         require(presaleFinalizeAgent.isSane());
@@ -302,27 +302,13 @@ contract RntCrowdsale is Pausable {
     }
 
     /**
-    @notice Function for claiming tokens for presale investors.
-    @dev Can be called only after presale ends. Tokens will be transfered to callers address.
-    */
-    function claimPresaleTokens() whenNotPaused external {
-        require(isPresaleFinalized == true);
-
-        uint256 senderEther = deposit.receivedEtherFrom(msg.sender);
-        uint256 multiplier = 10 ** 18;
-        senderEther = senderEther.mul(multiplier);
-        uint256 tokenWei = pricingStrategy.oneTokenInWei();
-        uint256 tokensAmount = senderEther.div(tokenWei);
-
-        require(tokensAmount > 0);
-        token.transferFrom(owner, msg.sender, tokensAmount);
-        PresaleTokensClaimed(tokensAmount);
-    }
-
-    /**
     @notice Transfer issued tokens to the investor.
     */
     function assignTokens(address _from, address _receiver, uint _tokenAmount) private {
         token.transferFrom(_from, _receiver, _tokenAmount);
+    }
+
+    function isCrowdSale() public constant returns (bool) {
+        return true;
     }
 }

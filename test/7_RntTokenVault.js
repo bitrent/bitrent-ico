@@ -1,11 +1,11 @@
-const RntToken = artifacts.require("RntToken");
+const RNTBToken = artifacts.require("RNTBToken");
 const RntTokenVault = artifacts.require("TestRntTokenVault");
 
 
 const INITIAL_SUPPLY = web3.toBigNumber("1000000000000000000000000000");
 
 const deployToken = () => {
-    return RntToken.new();
+    return RNTBToken.new();
 };
 
 const deployVault = (tokenAddress) => {
@@ -28,8 +28,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
             const ob = await vault.getVaultBalance.call({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
@@ -45,8 +43,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
             await vault.testRemoveTokensFromAccount(uuid1, web3.toBigNumber("100"), { from: owner });
@@ -63,8 +59,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
 
             expectThrow(
                 vault.testRemoveTokensFromAccount(uuid1, web3.toBigNumber("100"), { from: owner })
@@ -78,8 +72,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
 
             expectThrow(
                 vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: accounts[4] })
@@ -93,8 +85,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
@@ -111,8 +101,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
             await vault.transferTokensToAccount(uuid1, uuid2, web3.toBigNumber("100"), { from: owner });
@@ -129,8 +117,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
 
             expectThrow(
@@ -145,8 +131,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
@@ -162,13 +146,11 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
             await vault.moveTokensToAddress(uuid1, accounts[3], web3.toBigNumber("100"), { from: owner });
             let remains = await vault.balances.call(uuid1, { from: owner });
-            let transfered = await rnt.balances.call(accounts[3]);
+            let transfered = await rnt.balanceOf(accounts[3]);
             assert.equal(remains.valueOf(), web3.toBigNumber("100").toString());
             assert.equal(transfered.valueOf(), web3.toBigNumber("100").toString());
         } catch (err) {
@@ -180,8 +162,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
 
             expectThrow(
@@ -196,8 +176,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
@@ -213,13 +191,11 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
             await vault.moveAllTokensToAddress(uuid1, accounts[3], { from: owner });
             let remains = await vault.balances.call(uuid1, { from: owner });
-            let transfered = await rnt.balances.call(accounts[3]);
+            let transfered = await rnt.balanceOf(accounts[3]);
             assert.equal(remains.c[0], 0);
             assert.equal(transfered.valueOf(), web3.toBigNumber("200"));
         } catch (err) {
@@ -231,8 +207,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("200"), { from: owner });
             await rnt.transfer(vault.address, web3.toBigNumber("200"), { from: owner });
 
@@ -311,8 +285,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
             const vResponse = await vault.balances.call(uuid1, { from: owner });
@@ -329,8 +301,6 @@ contract('RntTokenVault', function (accounts) {
         try {
             let rnt = await deployToken();
             let vault = await deployVault(rnt.address);
-            await rnt.setReleaseAgent(owner);
-            await rnt.releaseTokenTransfer({ from: owner });
             await rnt.approve(vault.address, web3.toBigNumber("10000"), { from: owner });
             await vault.addTokensToAccount(uuid1, web3.toBigNumber("100"), { from: owner });
             await vault.allowAddress(accounts[5], true, { from: owner });

@@ -2,41 +2,40 @@ pragma solidity ^0.4.15;
 
 import "../library/ownership/HasNoEther.sol";
 import "../library/math/SafeMath.sol";
+import "../library/interface/IPricingStrategy.sol";
+import "../library/ownership/AllowedAddresses.sol";
 
-
-/**
- * Fixed crowdsale pricing - everybody gets the same price.
- */
-contract PricingStrategy is HasNoEther {
-    using SafeMath for uint;
+contract PricingStrategy is IPricingStrategy, AllowedAddresses, HasNoEther {
+    using SafeMath for uint256;
 
     /* How many weis one token costs */
     uint256 public oneTokenInWei;
 
-    address public crowdsaleAddress;
+    event TokenPriceInWeiUpdated(address _updatedFrom, uint256 _oneTokenInWei);
 
-    function PricingStrategy(address _crowdsale) {
-        crowdsaleAddress = _crowdsale;
-    }
-
-    modifier onlyCrowdsale() {
-        require(msg.sender == crowdsaleAddress);
-        _;
+    function isPricingStrategy() public constant returns (bool) {
+        return true;
     }
 
     /**
-     * Calculate the current price for buy in amount.
-     *
+      @notice Calculate tokens amount for ether sent according to oneTokenInWei value
+      @param _value Count of ether sent.
+      @param _decimals Decimals of the token
      */
-    function calculatePrice(uint256 _value, uint256 _decimals) public constant returns (uint) {
+    function calculatePrice(uint256 _value, uint256 _decimals) public constant returns (uint256) {
         uint256 multiplier = 10 ** _decimals;
         uint256 weiAmount = _value.mul(multiplier);
         uint256 tokens = weiAmount.div(oneTokenInWei);
         return tokens;
     }
 
-    function setTokenPriceInWei(uint _oneTokenInWei) onlyCrowdsale public returns (bool) {
+    /**
+      @notice Update token price in wei
+      @param _oneTokenInWei New price
+     */
+    function setTokenPriceInWei(uint256 _oneTokenInWei) onlyAllowedAddresses public returns (bool) {
         oneTokenInWei = _oneTokenInWei;
+        TokenPriceInWeiUpdated(msg.sender, oneTokenInWei);
         return true;
     }
 }
